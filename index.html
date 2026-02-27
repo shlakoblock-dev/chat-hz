@@ -237,6 +237,65 @@
             font-size: 0.8rem;
         }
         
+        /* Голосовой чат */
+        .voice-chat {
+            background: #1e293b;
+            color: white;
+            padding: 12px 24px;
+            border-bottom: 1px solid #334155;
+        }
+        .voice-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .voice-btn {
+            background: #3b82f6;
+            border: none;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        .voice-btn.active {
+            background: #ef4444;
+        }
+        .voice-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .voice-users {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+        .voice-user {
+            background: #334155;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .voice-user.speaking {
+            background: #3b82f6;
+            box-shadow: 0 0 10px #3b82f6;
+        }
+        .voice-user .mic-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #22c55e;
+        }
+        .voice-user.muted .mic-icon {
+            background: #ef4444;
+        }
+        
         /* Сообщения */
         .messages-container {
             flex: 1;
@@ -324,7 +383,7 @@
             color: #3b82f6;
         }
         
-        /* Кнопки действий над сообщением */
+        /* Кнопки действий */
         .message-actions {
             position: absolute;
             top: -10px;
@@ -424,38 +483,6 @@
             cursor: not-allowed;
         }
         
-        /* Голосовой чат */
-        .voice-chat {
-            background: #1e293b;
-            color: white;
-            padding: 12px 24px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            border-bottom: 1px solid #334155;
-        }
-        .voice-btn {
-            background: #3b82f6;
-            border: none;
-            color: white;
-            padding: 8px 20px;
-            border-radius: 40px;
-            cursor: pointer;
-        }
-        .voice-btn.active {
-            background: #ef4444;
-        }
-        .voice-users {
-            display: flex;
-            gap: 8px;
-        }
-        .voice-user {
-            background: #334155;
-            padding: 4px 12px;
-            border-radius: 30px;
-            font-size: 0.9rem;
-        }
-        
         /* Мобильная адаптация */
         @media (max-width: 700px) {
             body { padding: 0; }
@@ -478,6 +505,7 @@
                 display: block !important;
             }
             .message { max-width: 90%; }
+            .voice-controls { flex-direction: column; align-items: stretch; }
         }
         
         .menu-toggle {
@@ -492,6 +520,8 @@
             cursor: pointer;
         }
     </style>
+    <!-- Подключаем библиотеку для WebRTC -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body>
 <div id="app">
@@ -528,22 +558,24 @@
                 <button id="registerBtn">Регистрация</button>
             </div>
             <div class="auth-fields" id="emailField" style="display: none;">
-                <input type="email" id="emailInput" placeholder="email (для голоса)">
+                <input type="email" id="emailInput" placeholder="email">
                 <input type="text" id="codeInput" placeholder="код" maxlength="6">
-                <button id="sendCodeBtn">📧</button>
+                <button id="sendCodeBtn" title="отправить код на почту">📧</button>
                 <button id="verifyBtn">✓</button>
             </div>
             <div>
                 <span class="user-greeting" id="userGreeting"></span>
-                <span id="verifiedBadge" class="verified-badge" style="display: none;">📧</span>
+                <span id="verifiedBadge" class="verified-badge" style="display: none;">📧 верифицирован</span>
                 <button id="logoutBtn" style="display: none;">Выйти</button>
             </div>
         </div>
         
-        <!-- Голосовой чат (только для верифицированных) -->
+        <!-- Голосовой чат -->
         <div class="voice-chat" id="voiceChat" style="display: none;">
-            <button class="voice-btn" id="voiceBtn">🎤 войти в голосовой чат</button>
-            <div class="voice-users" id="voiceUsers"></div>
+            <div class="voice-controls">
+                <button class="voice-btn" id="voiceBtn" disabled>🎤 загрузка...</button>
+                <div class="voice-users" id="voiceUsers"></div>
+            </div>
         </div>
         
         <!-- Сообщения -->
@@ -573,62 +605,23 @@
         let currentRoom = localStorage.getItem('currentRoom') || '';
         let currentReplyTo = null;
         
-        // Голосовой чат
-        let voiceActive = false;
-        let voiceUsers = [];
-        
-        // ===== ШИФРОВАНИЕ (простое для демонстрации) =====
-        function encrypt(text, key) {
-            if (!text) return text;
-            let result = '';
-            for (let i = 0; i < text.length; i++) {
-                const charCode = text.charCodeAt(i) ^ key.charCodeAt(i % key.length);
-                result += String.fromCharCode(charCode);
-            }
-            return btoa(result);
-        }
-        
-        function decrypt(encrypted, key) {
-            if (!encrypted) return encrypted;
-            try {
-                const decoded = atob(encrypted);
-                let result = '';
-                for (let i = 0; i < decoded.length; i++) {
-                    const charCode = decoded.charCodeAt(i) ^ key.charCodeAt(i % key.length);
-                    result += String.fromCharCode(charCode);
-                }
-                return result;
-            } catch {
-                return encrypted;
-            }
-        }
+        // EmailJS конфигурация (бесплатный сервис)
+        const EMAILJS_CONFIG = {
+            serviceId: 'default_service',
+            templateId: 'template_verification',
+            userId: 'user_your_id' // Замените на свой ID
+        };
         
         // ===== ЗАГРУЗКА =====
         function loadData() {
             const msg = localStorage.getItem(STORAGE_KEY);
-            if (msg) {
-                try {
-                    messages = JSON.parse(msg);
-                } catch {
-                    messages = [];
-                }
-            } else {
-                messages = [];
-            }
+            messages = msg ? JSON.parse(msg) : [];
             
             const r = localStorage.getItem(ROOMS_KEY);
             rooms = r ? JSON.parse(r) : [];
             
             const session = localStorage.getItem(SESSION_KEY);
-            if (session) {
-                try {
-                    currentUser = JSON.parse(session);
-                } catch {
-                    currentUser = null;
-                }
-            } else {
-                currentUser = null;
-            }
+            currentUser = session ? JSON.parse(session) : null;
         }
         loadData();
         
@@ -679,10 +672,9 @@
                 return alert('Неверный логин/пароль');
             }
             
-            // Стабильный userId на основе логина
             currentUser = {
                 login: login,
-                userId: 'user_' + login,  // Теперь userId стабильный!
+                userId: 'user_' + login,
                 verified: userData.verified || false,
                 email: userData.email || ''
             };
@@ -690,10 +682,16 @@
             saveSession();
             updateUI();
             renderSidebar();
-            renderMessages(); // Перерисовываем сообщения, чтобы правильно определить свои
+            renderMessages();
+            
+            // Инициализируем голосовой чат если верифицирован
+            if (currentUser.verified) {
+                initVoiceChat();
+            }
         };
         
         window.logout = function() {
+            if (voiceActive) toggleVoice();
             currentUser = null;
             saveSession();
             updateUI();
@@ -702,38 +700,192 @@
         };
         
         // ===== ПОДТВЕРЖДЕНИЕ ПОЧТЫ =====
-        let currentCode = null;
-        
         function sendEmailCode(email) {
             if (!email || !email.includes('@')) return alert('Введите корректный email');
             
             // Генерируем код
-            currentCode = Math.floor(100000 + Math.random() * 900000).toString();
+            const code = Math.floor(100000 + Math.random() * 900000).toString();
             
-            // В реальном проекте здесь был бы запрос к серверу
-            // Для демонстрации просто показываем код
-            alert(`Ваш код подтверждения: ${currentCode}`);
-            return true;
+            // Сохраняем код временно
+            localStorage.setItem('verification_code_' + currentUser.login, code);
+            localStorage.setItem('verification_email_' + currentUser.login, email);
+            
+            // Имитация отправки на почту (в реальности здесь был бы запрос к EmailJS)
+            alert(`[ИМИТАЦИЯ] Код подтверждения отправлен на ${email}\n\nВ реальном проекте здесь будет интеграция с EmailJS\n\nКод: ${code}`);
+            
+            // Для демонстрации показываем код
+            console.log('Код подтверждения:', code);
         }
         
         function verifyEmail(code) {
-            if (code === currentCode) {
+            const savedCode = localStorage.getItem('verification_code_' + currentUser.login);
+            
+            if (code === savedCode) {
                 const users = getUsers();
-                if (currentUser) {
-                    users[currentUser.login].verified = true;
-                    users[currentUser.login].email = document.getElementById('emailInput').value;
-                    localStorage.setItem(USERS_KEY, JSON.stringify(users));
-                    
-                    currentUser.verified = true;
-                    saveSession();
-                    
-                    alert('Email подтвержден! Теперь доступен голосовой чат');
-                    updateUI();
-                }
+                const email = localStorage.getItem('verification_email_' + currentUser.login);
+                
+                users[currentUser.login].verified = true;
+                users[currentUser.login].email = email;
+                localStorage.setItem(USERS_KEY, JSON.stringify(users));
+                
+                currentUser.verified = true;
+                currentUser.email = email;
+                saveSession();
+                
+                // Очищаем временные данные
+                localStorage.removeItem('verification_code_' + currentUser.login);
+                localStorage.removeItem('verification_email_' + currentUser.login);
+                
+                alert('Email подтвержден! Теперь доступен голосовой чат');
+                updateUI();
+                initVoiceChat();
+                
                 return true;
             }
             alert('Неверный код');
             return false;
+        }
+        
+        // ===== ГОЛОСОВОЙ ЧАТ (WebRTC) =====
+        let peer = null;
+        let voiceActive = false;
+        let voiceUsers = [];
+        let localStream = null;
+        let connections = {};
+        
+        function initVoiceChat() {
+            if (!currentUser?.verified) return;
+            
+            document.getElementById('voiceBtn').disabled = false;
+            document.getElementById('voiceBtn').textContent = '🎤 войти в голосовой чат';
+            
+            // Инициализируем PeerJS
+            peer = new Peer('voice_' + currentUser.login, {
+                debug: 2
+            });
+            
+            peer.on('open', (id) => {
+                console.log('Голосовой чат готов, ID:', id);
+            });
+            
+            peer.on('call', (call) => {
+                if (!voiceActive) {
+                    call.close();
+                    return;
+                }
+                
+                // Отвечаем на звонок своим потоком
+                if (localStream) {
+                    call.answer(localStream);
+                    
+                    call.on('stream', (remoteStream) => {
+                        // Добавляем удаленный поток
+                        addRemoteStream(call.peer, remoteStream);
+                    });
+                    
+                    connections[call.peer] = call;
+                }
+            });
+            
+            peer.on('error', (err) => {
+                console.error('Peer error:', err);
+            });
+        }
+        
+        function toggleVoice() {
+            if (!currentUser?.verified) {
+                alert('Подтвердите email для доступа к голосовому чату');
+                return;
+            }
+            
+            if (!voiceActive) {
+                // Включаем микрофон
+                navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+                    .then(stream => {
+                        localStream = stream;
+                        voiceActive = true;
+                        
+                        document.getElementById('voiceBtn').textContent = '🔴 выйти из голосового чата';
+                        document.getElementById('voiceBtn').classList.add('active');
+                        
+                        // Добавляем себя
+                        voiceUsers = [currentUser.login];
+                        updateVoiceUsers();
+                        
+                        // Звоним всем друзьям в этом чате (упрощенно)
+                        // В реальном проекте здесь нужно получать список участников комнаты
+                        const friends = getFriends();
+                        friends.forEach(friend => {
+                            const friendVoiceId = 'voice_' + friend;
+                            
+                            const call = peer.call(friendVoiceId, localStream);
+                            
+                            call.on('stream', (remoteStream) => {
+                                addRemoteStream(friend, remoteStream);
+                            });
+                            
+                            call.on('close', () => {
+                                removeRemoteStream(friend);
+                            });
+                            
+                            connections[friend] = call;
+                        });
+                    })
+                    .catch(err => {
+                        console.error('Ошибка доступа к микрофону:', err);
+                        alert('Не удалось получить доступ к микрофону');
+                    });
+            } else {
+                // Выключаем микрофон
+                if (localStream) {
+                    localStream.getTracks().forEach(track => track.stop());
+                    localStream = null;
+                }
+                
+                // Закрываем все соединения
+                Object.values(connections).forEach(conn => conn.close());
+                connections = {};
+                
+                voiceActive = false;
+                voiceUsers = [];
+                
+                document.getElementById('voiceBtn').textContent = '🎤 войти в голосовой чат';
+                document.getElementById('voiceBtn').classList.remove('active');
+                updateVoiceUsers();
+            }
+        }
+        
+        function addRemoteStream(userId, stream) {
+            if (!voiceUsers.includes(userId)) {
+                voiceUsers.push(userId);
+                updateVoiceUsers();
+            }
+            
+            // Создаем аудио элемент для воспроизведения
+            const audio = new Audio();
+            audio.srcObject = stream;
+            audio.autoplay = true;
+        }
+        
+        function removeRemoteStream(userId) {
+            voiceUsers = voiceUsers.filter(u => u !== userId);
+            updateVoiceUsers();
+        }
+        
+        function updateVoiceUsers() {
+            const container = document.getElementById('voiceUsers');
+            container.innerHTML = voiceUsers.map(user => 
+                `<span class="voice-user">
+                    <span class="mic-icon"></span>
+                    ${user} ${user === currentUser?.login ? '(я)' : ''}
+                </span>`
+            ).join('');
+        }
+        
+        function getFriends() {
+            if (!currentUser) return [];
+            const f = localStorage.getItem('friends_' + currentUser.login);
+            return f ? JSON.parse(f) : [];
         }
         
         // ===== КОМНАТЫ =====
@@ -776,7 +928,7 @@
         }
         
         function renameRoom(code) {
-            const newName = prompt('Новое название:', code);
+            const newName = prompt('Новое название:', rooms.find(r => r.code === code)?.name || code);
             if (newName && newName.trim()) {
                 const room = rooms.find(r => r.code === code);
                 if (room) room.name = newName.trim();
@@ -806,22 +958,28 @@
             }) : Promise.resolve(null);
             
             processFile.then(fileData => {
-                // Шифруем текст
-                const encryptedText = text ? encrypt(text, currentRoom) : '';
+                // Простое шифрование (XOR)
+                function encrypt(str, key) {
+                    if (!str) return str;
+                    let result = '';
+                    for (let i = 0; i < str.length; i++) {
+                        result += String.fromCharCode(str.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+                    }
+                    return btoa(result);
+                }
                 
                 const msg = {
                     id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
                     room: currentRoom,
                     login: currentUser.login,
-                    userId: currentUser.userId,  // Теперь стабильный userId
-                    text: encryptedText,
+                    userId: currentUser.userId,
+                    text: encrypt(text, currentRoom),
                     time: Date.now(),
-                    reactions: [],
+                    reactions: {},
                     replyTo: currentReplyTo
                 };
                 
                 if (file && fileData) {
-                    // Шифруем файл (в демо просто сохраняем)
                     msg.fileName = file.name;
                     msg.fileData = fileData;
                 }
@@ -849,20 +1007,18 @@
             const msg = messages.find(m => m.id === msgId);
             if (!msg || !currentUser) return;
             
-            if (!msg.reactions) msg.reactions = [];
+            if (!msg.reactions) msg.reactions = {};
+            if (!msg.reactions[emoji]) msg.reactions[emoji] = [];
             
-            const existingIndex = msg.reactions.findIndex(r => r.user === currentUser.login && r.emoji === emoji);
+            const userIndex = msg.reactions[emoji].indexOf(currentUser.login);
             
-            if (existingIndex >= 0) {
-                // Убираем реакцию
-                msg.reactions.splice(existingIndex, 1);
+            if (userIndex >= 0) {
+                msg.reactions[emoji].splice(userIndex, 1);
+                if (msg.reactions[emoji].length === 0) {
+                    delete msg.reactions[emoji];
+                }
             } else {
-                // Добавляем реакцию
-                msg.reactions.push({
-                    user: currentUser.login,
-                    emoji: emoji,
-                    time: Date.now()
-                });
+                msg.reactions[emoji].push(currentUser.login);
             }
             
             saveMessages();
@@ -872,48 +1028,28 @@
         function setReplyTo(msgId) {
             const msg = messages.find(m => m.id === msgId);
             if (msg) {
-                const decryptedText = decrypt(msg.text, currentRoom);
+                // Дешифруем для предпросмотра
+                function decrypt(encrypted, key) {
+                    if (!encrypted) return '';
+                    try {
+                        const decoded = atob(encrypted);
+                        let result = '';
+                        for (let i = 0; i < decoded.length; i++) {
+                            result += String.fromCharCode(decoded.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+                        }
+                        return result;
+                    } catch {
+                        return encrypted;
+                    }
+                }
+                
                 currentReplyTo = {
                     id: msg.id,
-                    text: decryptedText.substring(0, 50) + (decryptedText.length > 50 ? '...' : ''),
+                    text: decrypt(msg.text, currentRoom).substring(0, 50),
                     login: msg.login
                 };
                 document.getElementById('messageInput').focus();
             }
-        }
-        
-        // ===== ГОЛОСОВОЙ ЧАТ =====
-        function toggleVoice() {
-            if (!currentUser?.verified) {
-                alert('Подтвердите email для доступа к голосовому чату');
-                return;
-            }
-            
-            voiceActive = !voiceActive;
-            
-            if (voiceActive) {
-                // В реальном приложении здесь подключение к WebRTC
-                voiceUsers = [
-                    currentUser.login,
-                    'demo_user_1',
-                    'demo_user_2'
-                ];
-                document.getElementById('voiceBtn').textContent = '🔴 выйти из голосового чата';
-                document.getElementById('voiceBtn').classList.add('active');
-            } else {
-                voiceUsers = [];
-                document.getElementById('voiceBtn').textContent = '🎤 войти в голосовой чат';
-                document.getElementById('voiceBtn').classList.remove('active');
-            }
-            
-            updateVoiceUsers();
-        }
-        
-        function updateVoiceUsers() {
-            const container = document.getElementById('voiceUsers');
-            container.innerHTML = voiceUsers.map(user => 
-                `<span class="voice-user">${user} ${user === currentUser?.login ? '(я)' : ''}</span>`
-            ).join('');
         }
         
         // ===== ОТРИСОВКА =====
@@ -978,6 +1114,20 @@
                 return;
             }
             
+            function decrypt(encrypted, key) {
+                if (!encrypted) return '';
+                try {
+                    const decoded = atob(encrypted);
+                    let result = '';
+                    for (let i = 0; i < decoded.length; i++) {
+                        result += String.fromCharCode(decoded.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+                    }
+                    return result;
+                } catch {
+                    return encrypted;
+                }
+            }
+            
             const roomMessages = messages
                 .filter(m => m.room === currentRoom)
                 .sort((a, b) => a.time - b.time)
@@ -990,10 +1140,10 @@
             
             let html = '';
             roomMessages.forEach(msg => {
-                const isOwn = msg.userId === currentUser.userId; // Сравниваем по стабильному userId
+                const isOwn = msg.userId === currentUser.userId;
                 const time = new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 
-                // Дешифруем текст
+                // Дешифруем
                 const decryptedText = decrypt(msg.text, currentRoom);
                 
                 // Ответ
@@ -1009,13 +1159,7 @@
                 // Реакции
                 let reactionsHtml = '<div class="reactions">';
                 if (msg.reactions) {
-                    const reactionCounts = {};
-                    msg.reactions.forEach(r => {
-                        if (!reactionCounts[r.emoji]) reactionCounts[r.emoji] = [];
-                        reactionCounts[r.emoji].push(r.user);
-                    });
-                    
-                    Object.entries(reactionCounts).forEach(([emoji, users]) => {
+                    Object.entries(msg.reactions).forEach(([emoji, users]) => {
                         const hasUserReaction = users.includes(currentUser.login);
                         reactionsHtml += `
                             <span class="reaction ${hasUserReaction ? 'active' : ''}" onclick="window.addReaction('${msg.id}', '${emoji}')">
@@ -1071,28 +1215,24 @@
         }
         
         function updateUI() {
-            // Обновляем информацию о пользователе
             document.getElementById('userGreeting').innerText = currentUser ? currentUser.login : '';
             document.getElementById('logoutBtn').style.display = currentUser ? 'inline-block' : 'none';
             
-            // Отображаем верификацию
             if (currentUser?.verified) {
                 document.getElementById('verifiedBadge').style.display = 'inline-block';
             } else {
                 document.getElementById('verifiedBadge').style.display = 'none';
             }
             
-            // Показываем поля для email если пользователь залогинен
             document.getElementById('emailField').style.display = currentUser ? 'flex' : 'none';
             
-            // Обновляем информацию о комнате
             const room = rooms.find(r => r.code === currentRoom);
             document.getElementById('roomNameDisplay').innerText = room?.name || currentRoom || '—';
             document.getElementById('roomCodeDisplay').innerText = currentRoom ? `📌 ${currentRoom}` : '';
             
-            // Голосовой чат
             if (currentUser?.verified) {
-                document.getElementById('voiceChat').style.display = 'flex';
+                document.getElementById('voiceChat').style.display = 'block';
+                if (!peer) initVoiceChat();
             } else {
                 document.getElementById('voiceChat').style.display = 'none';
             }
@@ -1163,7 +1303,7 @@
             });
         });
         
-        // Закрытие сайдбара на мобильных
+        // Закрытие сайдбара
         document.addEventListener('click', (e) => {
             const sidebar = document.getElementById('sidebar');
             const menuToggle = document.getElementById('menuToggle');
@@ -1176,7 +1316,7 @@
             }
         });
         
-        // Экспортируем функции
+        // Экспорт функций
         window.addReaction = addReaction;
         window.setReplyTo = setReplyTo;
         window.deleteMessage = deleteMessage;
@@ -1202,4 +1342,4 @@
     })();
 </script>
 </body>
-                  </html>
+</html>
