@@ -520,7 +520,9 @@
             cursor: pointer;
         }
     </style>
-    <!-- Подключаем библиотеку для WebRTC -->
+    <!-- EmailJS библиотека -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <!-- PeerJS для голосового чата -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body>
@@ -593,24 +595,35 @@
 
 <script>
     (function() {
+        // ===== ИНИЦИАЛИЗАЦИЯ EMAILJS С ТВОИМИ ДАННЫМИ =====
+        (function initEmailJS() {
+            try {
+                // Инициализация с публичным ключом
+                emailjs.init("izr8N0mWZ4P5zFGAO");
+                console.log("EmailJS инициализирован");
+            } catch (e) {
+                console.error("Ошибка инициализации EmailJS:", e);
+            }
+        })();
+
         // ===== ДАННЫЕ =====
         const STORAGE_KEY = 'chatMessages';
         const ROOMS_KEY = 'userRooms';
         const USERS_KEY = 'users';
         const SESSION_KEY = 'currentSession';
         
+        // Твои EmailJS данные
+        const EMAILJS_CONFIG = {
+            serviceId: 'service_ym6g34x',
+            templateId: 'template_ksu9dpc',
+            publicKey: 'izr8N0mWZ4P5zFGAO'
+        };
+        
         let messages = [];
         let rooms = [];
         let currentUser = null;
         let currentRoom = localStorage.getItem('currentRoom') || '';
         let currentReplyTo = null;
-        
-        // EmailJS конфигурация (бесплатный сервис)
-        const EMAILJS_CONFIG = {
-            serviceId: 'default_service',
-            templateId: 'template_verification',
-            userId: 'user_your_id' // Замените на свой ID
-        };
         
         // ===== ЗАГРУЗКА =====
         function loadData() {
@@ -699,22 +712,46 @@
             renderMessages();
         };
         
-        // ===== ПОДТВЕРЖДЕНИЕ ПОЧТЫ =====
+        // ===== ПОДТВЕРЖДЕНИЕ ПОЧТЫ (РЕАЛЬНАЯ ОТПРАВКА) =====
         function sendEmailCode(email) {
             if (!email || !email.includes('@')) return alert('Введите корректный email');
+            if (!currentUser) return alert('Сначала войдите');
             
-            // Генерируем код
+            // Генерируем 6-значный код
             const code = Math.floor(100000 + Math.random() * 900000).toString();
             
             // Сохраняем код временно
             localStorage.setItem('verification_code_' + currentUser.login, code);
             localStorage.setItem('verification_email_' + currentUser.login, email);
             
-            // Имитация отправки на почту (в реальности здесь был бы запрос к EmailJS)
-            alert(`[ИМИТАЦИЯ] Код подтверждения отправлен на ${email}\n\nВ реальном проекте здесь будет интеграция с EmailJS\n\nКод: ${code}`);
+            // Показываем статус отправки
+            const sendBtn = document.getElementById('sendCodeBtn');
+            const originalText = sendBtn.textContent;
+            sendBtn.textContent = '⏳';
+            sendBtn.disabled = true;
             
-            // Для демонстрации показываем код
-            console.log('Код подтверждения:', code);
+            // Отправляем через EmailJS с твоими данными
+            emailjs.send(
+                EMAILJS_CONFIG.serviceId,   // service_ym6g34x
+                EMAILJS_CONFIG.templateId,  // template_ksu9dpc
+                {
+                    to_email: email,
+                    login: currentUser.login,
+                    code: code,
+                    // Дополнительные переменные для шаблона
+                    subject: 'Код подтверждения для чат хз',
+                    app_name: 'чат хз'
+                }
+            ).then(function(response) {
+                console.log('Email отправлен:', response);
+                alert(`✅ Код подтверждения отправлен на ${email}\nПроверьте почту (включая папку спам)`);
+            }, function(error) {
+                console.error('Ошибка отправки:', error);
+                alert('❌ Ошибка отправки. Проверьте консоль для деталей.\n\nДля теста можно использовать код: ' + code);
+            }).finally(() => {
+                sendBtn.textContent = originalText;
+                sendBtn.disabled = false;
+            });
         }
         
         function verifyEmail(code) {
@@ -736,13 +773,13 @@
                 localStorage.removeItem('verification_code_' + currentUser.login);
                 localStorage.removeItem('verification_email_' + currentUser.login);
                 
-                alert('Email подтвержден! Теперь доступен голосовой чат');
+                alert('✅ Email подтвержден! Теперь доступен голосовой чат');
                 updateUI();
                 initVoiceChat();
                 
                 return true;
             }
-            alert('Неверный код');
+            alert('❌ Неверный код');
             return false;
         }
         
@@ -812,8 +849,7 @@
                         voiceUsers = [currentUser.login];
                         updateVoiceUsers();
                         
-                        // Звоним всем друзьям в этом чате (упрощенно)
-                        // В реальном проекте здесь нужно получать список участников комнаты
+                        // Звоним всем друзьям в этом чате
                         const friends = getFriends();
                         friends.forEach(friend => {
                             const friendVoiceId = 'voice_' + friend;
@@ -1045,7 +1081,7 @@
                 
                 currentReplyTo = {
                     id: msg.id,
-                    text: decrypt(msg.text, currentRoom).substring(0, 50),
+                    text: decrypt(msg.text, currentRoom).substring(0, 50) + (decrypt(msg.text, currentRoom).length > 50 ? '...' : ''),
                     login: msg.login
                 };
                 document.getElementById('messageInput').focus();
@@ -1339,6 +1375,14 @@
         }
         updateUI();
         renderMessages();
+        
+        // Исправление для мобильной клавиатуры
+        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+            window.addEventListener('resize', () => {
+                document.querySelector('.messages-container').scrollTop = 
+                    document.querySelector('.messages-container').scrollHeight;
+            });
+        }
     })();
 </script>
 </body>
