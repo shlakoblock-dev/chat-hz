@@ -33,7 +33,7 @@
             position: relative;
         }
         
-        /* ===== БОКОВАЯ ПАНЕЛЬ ===== */
+        /* Боковая панель */
         .sidebar {
             width: 320px;
             background: #f8fafc;
@@ -71,30 +71,45 @@
             -webkit-overflow-scrolling: touch;
         }
         
-        /* Список чатов */
-        .room-item, .friend-item, .request-item {
+        /* Элементы списков */
+        .room-item {
             padding: 12px 16px;
             background: white;
             border-radius: 40px;
             margin-bottom: 8px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.05);
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
             border: 1px solid #e2e8f0;
             transition: 0.2s;
+            position: relative;
         }
-        .room-item.active, .friend-item.active {
+        .room-item.active {
             background: #3b82f6;
             color: white;
             border-color: #2563eb;
         }
-        .room-actions, .friend-actions {
-            display: flex;
-            gap: 6px;
+        .room-name {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 4px;
+            padding-right: 70px;
         }
-        .room-actions button, .friend-actions button {
+        .room-code {
+            font-size: 0.75rem;
+            color: #64748b;
+            display: block;
+        }
+        .active .room-code {
+            color: rgba(255,255,255,0.8);
+        }
+        .room-actions {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 4px;
+        }
+        .room-actions button {
             background: none;
             border: none;
             font-size: 1rem;
@@ -103,12 +118,12 @@
             cursor: pointer;
             opacity: 0.6;
         }
-        .room-actions button:hover, .friend-actions button:hover {
+        .room-actions button:hover {
             opacity: 1;
             background: rgba(0,0,0,0.05);
         }
         
-        /* Форма добавления */
+        /* Формы */
         .add-form {
             padding: 16px;
             border-top: 1px solid #e2e8f0;
@@ -132,7 +147,7 @@
             cursor: pointer;
         }
         
-        /* ===== ОСНОВНОЙ ЧАТ ===== */
+        /* Основной чат */
         .chat-area {
             flex: 1;
             display: flex;
@@ -155,11 +170,21 @@
             font-weight: 600;
             flex: 1;
         }
-        .current-room-badge {
+        .room-info {
             background: rgba(255,255,255,0.2);
             padding: 6px 16px;
             border-radius: 40px;
             font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+        .room-name-display {
+            font-size: 1rem;
+        }
+        .room-code-display {
+            font-size: 0.7rem;
+            opacity: 0.8;
         }
         
         /* Панель авторизации */
@@ -204,6 +229,13 @@
         #logoutBtn {
             background: #94a3b8;
         }
+        .verified-badge {
+            background: #22c55e;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+        }
         
         /* Сообщения */
         .messages-container {
@@ -245,14 +277,9 @@
             font-weight: 700;
             color: #2563eb;
         }
-        .msg-login {
-            color: #64748b;
-            font-size: 0.75rem;
-        }
         .msg-time {
             color: #94a3b8;
             font-size: 0.7rem;
-            margin-left: auto;
         }
         .msg-text {
             line-height: 1.5;
@@ -263,30 +290,77 @@
         /* Реакции */
         .reactions {
             display: flex;
-            gap: 4px;
+            gap: 6px;
             flex-wrap: wrap;
-            margin-top: 4px;
+            margin-top: 8px;
         }
         .reaction {
             background: rgba(0,0,0,0.05);
             border-radius: 30px;
-            padding: 4px 8px;
-            font-size: 0.85rem;
+            padding: 4px 10px;
+            font-size: 0.9rem;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
             cursor: pointer;
+            border: 1px solid transparent;
+            transition: 0.2s;
+        }
+        .reaction.active {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: #3b82f6;
         }
         .reaction:hover {
             background: rgba(0,0,0,0.1);
         }
-        .add-reaction {
-            background: none;
-            border: 1px dashed #94a3b8;
-            border-radius: 30px;
-            padding: 4px 8px;
+        .reaction-emoji {
+            font-size: 1rem;
+        }
+        .reaction-count {
             font-size: 0.85rem;
+            color: #64748b;
+        }
+        .active .reaction-count {
+            color: #3b82f6;
+        }
+        
+        /* Кнопки действий над сообщением */
+        .message-actions {
+            position: absolute;
+            top: -10px;
+            right: 10px;
+            display: flex;
+            gap: 4px;
+            background: white;
+            border-radius: 30px;
+            padding: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .message:hover .message-actions {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .message-actions button {
+            background: none;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 30px;
             cursor: pointer;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+        .message-actions button:hover {
+            background: #f1f5f9;
+        }
+        .message-actions .reply-btn {
+            color: #3b82f6;
+        }
+        .message-actions .delete-btn {
+            color: #ef4444;
         }
         
         /* Файлы */
@@ -304,41 +378,6 @@
             max-width: 200px;
             max-height: 200px;
             border-radius: 12px;
-        }
-        .file-delete, .msg-delete {
-            background: #ef4444;
-            color: white;
-            border: none;
-            padding: 4px 12px;
-            border-radius: 30px;
-            font-size: 0.8rem;
-            cursor: pointer;
-        }
-        .msg-delete {
-            position: absolute;
-            top: 2px;
-            right: 8px;
-            background: none;
-            color: #ef4444;
-            font-size: 1.2rem;
-            display: none;
-        }
-        .message.own:hover .msg-delete {
-            display: block;
-        }
-        
-        /* Ответы */
-        .reply-to {
-            background: rgba(0,0,0,0.03);
-            padding: 8px 12px;
-            border-radius: 12px;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-            border-left: 3px solid #3b82f6;
-        }
-        .reply-name {
-            font-weight: 600;
-            color: #2563eb;
         }
         
         /* Панель ввода */
@@ -385,6 +424,38 @@
             cursor: not-allowed;
         }
         
+        /* Голосовой чат */
+        .voice-chat {
+            background: #1e293b;
+            color: white;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-bottom: 1px solid #334155;
+        }
+        .voice-btn {
+            background: #3b82f6;
+            border: none;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+        }
+        .voice-btn.active {
+            background: #ef4444;
+        }
+        .voice-users {
+            display: flex;
+            gap: 8px;
+        }
+        .voice-user {
+            background: #334155;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+        }
+        
         /* Мобильная адаптация */
         @media (max-width: 700px) {
             body { padding: 0; }
@@ -406,6 +477,7 @@
             .menu-toggle {
                 display: block !important;
             }
+            .message { max-width: 90%; }
         }
         
         .menu-toggle {
@@ -440,8 +512,11 @@
     <div class="chat-area">
         <div class="chat-header">
             <button class="menu-toggle" id="menuToggle">☰</button>
-            <h2>💬 Мессенджер</h2>
-            <div class="current-room-badge" id="currentRoomDisplay">—</div>
+            <h2>💬 чат хз</h2>
+            <div class="room-info" id="roomInfo">
+                <span class="room-name-display" id="roomNameDisplay">—</span>
+                <span class="room-code-display" id="roomCodeDisplay"></span>
+            </div>
         </div>
         
         <!-- Авторизация -->
@@ -452,10 +527,23 @@
                 <button id="loginBtn">Войти</button>
                 <button id="registerBtn">Регистрация</button>
             </div>
+            <div class="auth-fields" id="emailField" style="display: none;">
+                <input type="email" id="emailInput" placeholder="email (для голоса)">
+                <input type="text" id="codeInput" placeholder="код" maxlength="6">
+                <button id="sendCodeBtn">📧</button>
+                <button id="verifyBtn">✓</button>
+            </div>
             <div>
                 <span class="user-greeting" id="userGreeting"></span>
+                <span id="verifiedBadge" class="verified-badge" style="display: none;">📧</span>
                 <button id="logoutBtn" style="display: none;">Выйти</button>
             </div>
+        </div>
+        
+        <!-- Голосовой чат (только для верифицированных) -->
+        <div class="voice-chat" id="voiceChat" style="display: none;">
+            <button class="voice-btn" id="voiceBtn">🎤 войти в голосовой чат</button>
+            <div class="voice-users" id="voiceUsers"></div>
         </div>
         
         <!-- Сообщения -->
@@ -478,8 +566,6 @@
         const ROOMS_KEY = 'userRooms';
         const USERS_KEY = 'users';
         const SESSION_KEY = 'currentSession';
-        const FRIENDS_KEY = 'friends';
-        const REQUESTS_KEY = 'friendRequests';
         
         let messages = [];
         let rooms = [];
@@ -487,16 +573,62 @@
         let currentRoom = localStorage.getItem('currentRoom') || '';
         let currentReplyTo = null;
         
+        // Голосовой чат
+        let voiceActive = false;
+        let voiceUsers = [];
+        
+        // ===== ШИФРОВАНИЕ (простое для демонстрации) =====
+        function encrypt(text, key) {
+            if (!text) return text;
+            let result = '';
+            for (let i = 0; i < text.length; i++) {
+                const charCode = text.charCodeAt(i) ^ key.charCodeAt(i % key.length);
+                result += String.fromCharCode(charCode);
+            }
+            return btoa(result);
+        }
+        
+        function decrypt(encrypted, key) {
+            if (!encrypted) return encrypted;
+            try {
+                const decoded = atob(encrypted);
+                let result = '';
+                for (let i = 0; i < decoded.length; i++) {
+                    const charCode = decoded.charCodeAt(i) ^ key.charCodeAt(i % key.length);
+                    result += String.fromCharCode(charCode);
+                }
+                return result;
+            } catch {
+                return encrypted;
+            }
+        }
+        
         // ===== ЗАГРУЗКА =====
         function loadData() {
             const msg = localStorage.getItem(STORAGE_KEY);
-            messages = msg ? JSON.parse(msg) : [];
+            if (msg) {
+                try {
+                    messages = JSON.parse(msg);
+                } catch {
+                    messages = [];
+                }
+            } else {
+                messages = [];
+            }
             
             const r = localStorage.getItem(ROOMS_KEY);
             rooms = r ? JSON.parse(r) : [];
             
             const session = localStorage.getItem(SESSION_KEY);
-            currentUser = session ? JSON.parse(session) : null;
+            if (session) {
+                try {
+                    currentUser = JSON.parse(session);
+                } catch {
+                    currentUser = null;
+                }
+            } else {
+                currentUser = null;
+            }
         }
         loadData();
         
@@ -521,28 +653,6 @@
             return u ? JSON.parse(u) : {};
         }
         
-        function getFriends() {
-            if (!currentUser) return [];
-            const f = localStorage.getItem(FRIENDS_KEY + '_' + currentUser.login);
-            return f ? JSON.parse(f) : [];
-        }
-        
-        function saveFriends(friends) {
-            if (!currentUser) return;
-            localStorage.setItem(FRIENDS_KEY + '_' + currentUser.login, JSON.stringify(friends));
-        }
-        
-        function getRequests() {
-            if (!currentUser) return [];
-            const r = localStorage.getItem(REQUESTS_KEY + '_' + currentUser.login);
-            return r ? JSON.parse(r) : [];
-        }
-        
-        function saveRequests(requests) {
-            if (!currentUser) return;
-            localStorage.setItem(REQUESTS_KEY + '_' + currentUser.login, JSON.stringify(requests));
-        }
-        
         // ===== РЕГИСТРАЦИЯ/ВХОД =====
         window.register = function(login, pass) {
             if (!login || !pass) return alert('Введите логин и пароль');
@@ -551,10 +661,11 @@
             const users = getUsers();
             if (users[login]) return alert('Логин уже существует');
             
-            // Проверяем, что такого логина нет в системе
             users[login] = {
                 password: btoa(pass),
-                created: Date.now()
+                created: Date.now(),
+                verified: false,
+                email: ''
             };
             localStorage.setItem(USERS_KEY, JSON.stringify(users));
             alert('Регистрация успешна');
@@ -568,13 +679,18 @@
                 return alert('Неверный логин/пароль');
             }
             
+            // Стабильный userId на основе логина
             currentUser = {
                 login: login,
-                userId: 'user_' + login + '_' + Date.now()
+                userId: 'user_' + login,  // Теперь userId стабильный!
+                verified: userData.verified || false,
+                email: userData.email || ''
             };
+            
             saveSession();
             updateUI();
             renderSidebar();
+            renderMessages(); // Перерисовываем сообщения, чтобы правильно определить свои
         };
         
         window.logout = function() {
@@ -582,77 +698,42 @@
             saveSession();
             updateUI();
             renderSidebar();
+            renderMessages();
         };
         
-        // ===== ДРУЗЬЯ =====
-        function sendFriendRequest(login) {
-            if (!currentUser) return alert('Сначала войдите');
-            if (login === currentUser.login) return alert('Нельзя добавить себя');
+        // ===== ПОДТВЕРЖДЕНИЕ ПОЧТЫ =====
+        let currentCode = null;
+        
+        function sendEmailCode(email) {
+            if (!email || !email.includes('@')) return alert('Введите корректный email');
             
-            const users = getUsers();
-            if (!users[login]) return alert('Пользователь не найден');
+            // Генерируем код
+            currentCode = Math.floor(100000 + Math.random() * 900000).toString();
             
-            // Получаем запросы получателя
-            const recipientRequests = localStorage.getItem(REQUESTS_KEY + '_' + login);
-            const requests = recipientRequests ? JSON.parse(recipientRequests) : [];
-            
-            // Проверяем, нет ли уже запроса
-            if (requests.some(r => r.from === currentUser.login)) {
-                return alert('Запрос уже отправлен');
-            }
-            
-            requests.push({
-                from: currentUser.login,
-                time: Date.now()
-            });
-            
-            localStorage.setItem(REQUESTS_KEY + '_' + login, JSON.stringify(requests));
-            alert('Запрос отправлен');
+            // В реальном проекте здесь был бы запрос к серверу
+            // Для демонстрации просто показываем код
+            alert(`Ваш код подтверждения: ${currentCode}`);
+            return true;
         }
         
-        function acceptRequest(from) {
-            if (!currentUser) return;
-            
-            // Удаляем из запросов
-            const requests = getRequests();
-            const newRequests = requests.filter(r => r.from !== from);
-            saveRequests(newRequests);
-            
-            // Добавляем в друзья обоим
-            const myFriends = getFriends();
-            if (!myFriends.includes(from)) {
-                myFriends.push(from);
-                saveFriends(myFriends);
+        function verifyEmail(code) {
+            if (code === currentCode) {
+                const users = getUsers();
+                if (currentUser) {
+                    users[currentUser.login].verified = true;
+                    users[currentUser.login].email = document.getElementById('emailInput').value;
+                    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+                    
+                    currentUser.verified = true;
+                    saveSession();
+                    
+                    alert('Email подтвержден! Теперь доступен голосовой чат');
+                    updateUI();
+                }
+                return true;
             }
-            
-            const theirFriends = localStorage.getItem(FRIENDS_KEY + '_' + from);
-            const theirList = theirFriends ? JSON.parse(theirFriends) : [];
-            if (!theirList.includes(currentUser.login)) {
-                theirList.push(currentUser.login);
-                localStorage.setItem(FRIENDS_KEY + '_' + from, JSON.stringify(theirList));
-            }
-            
-            // Создаем личный чат
-            const chatCode = [currentUser.login, from].sort().join('_');
-            if (!rooms.find(r => r.code === chatCode)) {
-                rooms.push({
-                    code: chatCode,
-                    name: '💬 ' + from,
-                    isPrivate: true,
-                    participants: [currentUser.login, from]
-                });
-                saveRooms();
-            }
-            
-            renderSidebar();
-        }
-        
-        function declineRequest(from) {
-            if (!currentUser) return;
-            const requests = getRequests();
-            const newRequests = requests.filter(r => r.from !== from);
-            saveRequests(newRequests);
-            renderSidebar();
+            alert('Неверный код');
+            return false;
         }
         
         // ===== КОМНАТЫ =====
@@ -678,32 +759,11 @@
             currentReplyTo = null;
             localStorage.setItem('currentRoom', code);
             updateUI();
+            renderMessages();
         }
         
         function deleteRoom(code) {
-            const room = rooms.find(r => r.code === code);
-            
-            // Проверяем, все ли участники удалили чат
-            if (room?.participants) {
-                // Приватный чат - отмечаем, что текущий пользователь удалил
-                const deletedKey = 'deleted_' + currentUser.login + '_' + code;
-                localStorage.setItem(deletedKey, 'true');
-                
-                // Проверяем, все ли удалили
-                const allDeleted = room.participants.every(p => {
-                    return localStorage.getItem('deleted_' + p + '_' + code) === 'true';
-                });
-                
-                if (allDeleted) {
-                    // Удаляем все сообщения этого чата
-                    messages = messages.filter(m => m.room !== code);
-                    saveMessages();
-                }
-            } else {
-                // Публичный чат - просто удаляем из списка
-                messages = messages.filter(m => m.room !== code);
-                saveMessages();
-            }
+            if (!confirm('Удалить чат?')) return;
             
             rooms = rooms.filter(r => r.code !== code);
             saveRooms();
@@ -746,18 +806,22 @@
             }) : Promise.resolve(null);
             
             processFile.then(fileData => {
+                // Шифруем текст
+                const encryptedText = text ? encrypt(text, currentRoom) : '';
+                
                 const msg = {
                     id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
                     room: currentRoom,
                     login: currentUser.login,
-                    userId: currentUser.userId,
-                    text: text,
+                    userId: currentUser.userId,  // Теперь стабильный userId
+                    text: encryptedText,
                     time: Date.now(),
                     reactions: [],
                     replyTo: currentReplyTo
                 };
                 
                 if (file && fileData) {
+                    // Шифруем файл (в демо просто сохраняем)
                     msg.fileName = file.name;
                     msg.fileData = fileData;
                 }
@@ -781,30 +845,22 @@
             }
         }
         
-        function deleteFile(msgId) {
-            const msg = messages.find(m => m.id === msgId && m.userId === currentUser?.userId);
-            if (msg) {
-                delete msg.fileName;
-                delete msg.fileData;
-                saveMessages();
-                renderMessages();
-            }
-        }
-        
-        function addReaction(msgId, reaction) {
+        function addReaction(msgId, emoji) {
             const msg = messages.find(m => m.id === msgId);
-            if (!msg) return;
+            if (!msg || !currentUser) return;
             
             if (!msg.reactions) msg.reactions = [];
             
-            const existing = msg.reactions.find(r => r.user === currentUser.login && r.reaction === reaction);
-            if (existing) {
+            const existingIndex = msg.reactions.findIndex(r => r.user === currentUser.login && r.emoji === emoji);
+            
+            if (existingIndex >= 0) {
                 // Убираем реакцию
-                msg.reactions = msg.reactions.filter(r => !(r.user === currentUser.login && r.reaction === reaction));
+                msg.reactions.splice(existingIndex, 1);
             } else {
+                // Добавляем реакцию
                 msg.reactions.push({
                     user: currentUser.login,
-                    reaction: reaction,
+                    emoji: emoji,
                     time: Date.now()
                 });
             }
@@ -816,13 +872,48 @@
         function setReplyTo(msgId) {
             const msg = messages.find(m => m.id === msgId);
             if (msg) {
+                const decryptedText = decrypt(msg.text, currentRoom);
                 currentReplyTo = {
                     id: msg.id,
-                    text: msg.text.substring(0, 50) + (msg.text.length > 50 ? '...' : ''),
+                    text: decryptedText.substring(0, 50) + (decryptedText.length > 50 ? '...' : ''),
                     login: msg.login
                 };
                 document.getElementById('messageInput').focus();
             }
+        }
+        
+        // ===== ГОЛОСОВОЙ ЧАТ =====
+        function toggleVoice() {
+            if (!currentUser?.verified) {
+                alert('Подтвердите email для доступа к голосовому чату');
+                return;
+            }
+            
+            voiceActive = !voiceActive;
+            
+            if (voiceActive) {
+                // В реальном приложении здесь подключение к WebRTC
+                voiceUsers = [
+                    currentUser.login,
+                    'demo_user_1',
+                    'demo_user_2'
+                ];
+                document.getElementById('voiceBtn').textContent = '🔴 выйти из голосового чата';
+                document.getElementById('voiceBtn').classList.add('active');
+            } else {
+                voiceUsers = [];
+                document.getElementById('voiceBtn').textContent = '🎤 войти в голосовой чат';
+                document.getElementById('voiceBtn').classList.remove('active');
+            }
+            
+            updateVoiceUsers();
+        }
+        
+        function updateVoiceUsers() {
+            const container = document.getElementById('voiceUsers');
+            container.innerHTML = voiceUsers.map(user => 
+                `<span class="voice-user">${user} ${user === currentUser?.login ? '(я)' : ''}</span>`
+            ).join('');
         }
         
         // ===== ОТРИСОВКА =====
@@ -832,20 +923,19 @@
             const addForm = document.getElementById('addForm');
             
             if (!currentUser) {
-                container.innerHTML = '<div class="info-line">Войдите, чтобы продолжить</div>';
+                container.innerHTML = '<div style="padding: 16px; color: #64748b; text-align: center;">🔑 Войдите, чтобы продолжить</div>';
                 addForm.innerHTML = '';
                 return;
             }
             
             if (activeTab === 'chats') {
-                // Список чатов
                 let html = '';
                 rooms.forEach(room => {
                     const active = room.code === currentRoom ? 'active' : '';
-                    const displayName = room.name || room.code;
                     html += `
                         <div class="room-item ${active}" data-code="${room.code}">
-                            <span>${escapeHtml(displayName)}</span>
+                            <span class="room-name">${escapeHtml(room.name || room.code)}</span>
+                            <span class="room-code">${escapeHtml(room.code)}</span>
                             <div class="room-actions">
                                 <button onclick="window.renameRoom('${room.code}')">✏️</button>
                                 <button onclick="window.deleteRoom('${room.code}')">✕</button>
@@ -853,9 +943,8 @@
                         </div>
                     `;
                 });
-                container.innerHTML = html || '<div class="info-line">Нет чатов</div>';
+                container.innerHTML = html || '<div style="padding: 16px; color: #64748b; text-align: center;">Нет чатов</div>';
                 
-                // Форма добавления чата
                 addForm.innerHTML = `
                     <input type="text" id="newRoomInput" placeholder="код комнаты" maxlength="12">
                     <button id="createRoomBtn">➕ Создать чат</button>
@@ -873,52 +962,6 @@
                     const code = document.getElementById('newRoomInput')?.value;
                     if (code) addRoom(code);
                 });
-                
-            } else if (activeTab === 'friends') {
-                // Список друзей
-                const friends = getFriends();
-                let html = '';
-                friends.forEach(friend => {
-                    const chatCode = [currentUser.login, friend].sort().join('_');
-                    html += `
-                        <div class="friend-item" data-friend="${friend}">
-                            <span>👤 ${escapeHtml(friend)}</span>
-                            <div class="friend-actions">
-                                <button onclick="window.setCurrentRoom('${chatCode}')">💬</button>
-                            </div>
-                        </div>
-                    `;
-                });
-                container.innerHTML = html || '<div class="info-line">Нет друзей</div>';
-                
-                // Форма добавления друга
-                addForm.innerHTML = `
-                    <input type="text" id="addFriendInput" placeholder="логин друга">
-                    <button id="addFriendBtn">➕ Добавить</button>
-                `;
-                
-                document.getElementById('addFriendBtn')?.addEventListener('click', () => {
-                    const login = document.getElementById('addFriendInput')?.value;
-                    if (login) sendFriendRequest(login);
-                });
-                
-            } else if (activeTab === 'requests') {
-                // Запросы в друзья
-                const requests = getRequests();
-                let html = '';
-                requests.forEach(req => {
-                    html += `
-                        <div class="request-item">
-                            <span>👤 ${escapeHtml(req.from)}</span>
-                            <div class="friend-actions">
-                                <button onclick="window.acceptRequest('${req.from}')">✅ Принять</button>
-                                <button onclick="window.declineRequest('${req.from}')">❌</button>
-                            </div>
-                        </div>
-                    `;
-                });
-                container.innerHTML = html || '<div class="info-line">Нет запросов</div>';
-                addForm.innerHTML = '';
             }
         }
         
@@ -926,12 +969,12 @@
             const container = document.getElementById('messagesList');
             
             if (!currentUser) {
-                container.innerHTML = '<div class="info-line">🔑 Войдите, чтобы писать</div>';
+                container.innerHTML = '<div style="padding: 24px; color: #64748b; text-align: center;">🔑 Войдите, чтобы писать</div>';
                 return;
             }
             
             if (!currentRoom) {
-                container.innerHTML = '<div class="info-line">📁 Выберите чат</div>';
+                container.innerHTML = '<div style="padding: 24px; color: #64748b; text-align: center;">📁 Выберите чат</div>';
                 return;
             }
             
@@ -941,51 +984,58 @@
                 .slice(-100);
             
             if (!roomMessages.length) {
-                container.innerHTML = '<div class="info-line">💬 Напишите первое сообщение</div>';
+                container.innerHTML = '<div style="padding: 24px; color: #64748b; text-align: center;">💬 Напишите первое сообщение</div>';
                 return;
             }
             
             let html = '';
             roomMessages.forEach(msg => {
-                const isOwn = msg.userId === currentUser.userId;
+                const isOwn = msg.userId === currentUser.userId; // Сравниваем по стабильному userId
                 const time = new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 
-                // Ответ на сообщение
+                // Дешифруем текст
+                const decryptedText = decrypt(msg.text, currentRoom);
+                
+                // Ответ
                 let replyHtml = '';
                 if (msg.replyTo) {
                     replyHtml = `
-                        <div class="reply-to">
-                            <span class="reply-name">${escapeHtml(msg.replyTo.login)}</span>
-                            <span>${escapeHtml(msg.replyTo.text)}</span>
+                        <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px; padding-left: 8px; border-left: 2px solid #3b82f6;">
+                            ↪️ ${escapeHtml(msg.replyTo.login)}: ${escapeHtml(msg.replyTo.text)}
                         </div>
                     `;
                 }
                 
                 // Реакции
                 let reactionsHtml = '<div class="reactions">';
-                const reactionsMap = new Map();
-                msg.reactions?.forEach(r => {
-                    const key = r.reaction;
-                    if (!reactionsMap.has(key)) reactionsMap.set(key, []);
-                    reactionsMap.get(key).push(r.user);
-                });
+                if (msg.reactions) {
+                    const reactionCounts = {};
+                    msg.reactions.forEach(r => {
+                        if (!reactionCounts[r.emoji]) reactionCounts[r.emoji] = [];
+                        reactionCounts[r.emoji].push(r.user);
+                    });
+                    
+                    Object.entries(reactionCounts).forEach(([emoji, users]) => {
+                        const hasUserReaction = users.includes(currentUser.login);
+                        reactionsHtml += `
+                            <span class="reaction ${hasUserReaction ? 'active' : ''}" onclick="window.addReaction('${msg.id}', '${emoji}')">
+                                <span class="reaction-emoji">${emoji}</span>
+                                <span class="reaction-count">${users.length}</span>
+                            </span>
+                        `;
+                    });
+                }
                 
-                reactionsMap.forEach((users, reaction) => {
+                // Быстрые реакции
+                const quickEmojis = ['👍', '❤️', '😂', '😮', '😢', '👎'];
+                quickEmojis.forEach(emoji => {
                     reactionsHtml += `
-                        <span class="reaction" onclick="window.addReaction('${msg.id}', '${reaction}')">
-                            ${reaction} ${users.length}
+                        <span class="reaction" onclick="window.addReaction('${msg.id}', '${emoji}')">
+                            <span class="reaction-emoji">${emoji}</span>
                         </span>
                     `;
                 });
-                
-                reactionsHtml += `
-                    <span class="add-reaction" onclick="window.addReaction('${msg.id}', '👍')">👍</span>
-                    <span class="add-reaction" onclick="window.addReaction('${msg.id}', '❤️')">❤️</span>
-                    <span class="add-reaction" onclick="window.addReaction('${msg.id}', '😂')">😂</span>
-                    <span class="add-reaction" onclick="window.addReaction('${msg.id}', '😮')">😮</span>
-                    <span class="add-reaction" onclick="window.addReaction('${msg.id}', '😢')">😢</span>
-                    <span class="add-reaction" onclick="window.addReaction('${msg.id}', '👎')">👎</span>
-                </div>`;
+                reactionsHtml += '</div>';
                 
                 // Файл
                 let fileHtml = '';
@@ -995,23 +1045,24 @@
                         <div class="file-attachment">
                             ${isImage ? `<img src="${msg.fileData}" alt="">` : ''}
                             <a href="${msg.fileData}" download="${msg.fileName}">⬇️ ${escapeHtml(msg.fileName)}</a>
-                            ${isOwn ? `<button class="file-delete" onclick="window.deleteFile('${msg.id}')">🗑</button>` : ''}
                         </div>
                     `;
                 }
                 
                 html += `
-                    <div class="message ${isOwn ? 'own' : 'other'}">
+                    <div class="message ${isOwn ? 'own' : 'other'}" data-msg-id="${msg.id}">
                         <div class="msg-header">
                             <span class="msg-name">${escapeHtml(msg.login)}</span>
-                            <span class="msg-time">${escapeHtml(time)}</span>
+                            <span class="msg-time">${time}</span>
                         </div>
                         ${replyHtml}
-                        <div class="msg-text">${escapeHtml(msg.text || '')}</div>
+                        <div class="msg-text">${escapeHtml(decryptedText)}</div>
                         ${fileHtml}
                         ${reactionsHtml}
-                        <button class="msg-delete" onclick="window.setReplyTo('${msg.id}')">↩️</button>
-                        ${isOwn ? `<button class="msg-delete" onclick="window.deleteMessage('${msg.id}')">✕</button>` : ''}
+                        <div class="message-actions">
+                            <button class="reply-btn" onclick="window.setReplyTo('${msg.id}')">↩️</button>
+                            ${isOwn ? `<button class="delete-btn" onclick="window.deleteMessage('${msg.id}')">🗑️</button>` : ''}
+                        </div>
                     </div>
                 `;
             });
@@ -1020,16 +1071,35 @@
         }
         
         function updateUI() {
+            // Обновляем информацию о пользователе
             document.getElementById('userGreeting').innerText = currentUser ? currentUser.login : '';
             document.getElementById('logoutBtn').style.display = currentUser ? 'inline-block' : 'none';
             
+            // Отображаем верификацию
+            if (currentUser?.verified) {
+                document.getElementById('verifiedBadge').style.display = 'inline-block';
+            } else {
+                document.getElementById('verifiedBadge').style.display = 'none';
+            }
+            
+            // Показываем поля для email если пользователь залогинен
+            document.getElementById('emailField').style.display = currentUser ? 'flex' : 'none';
+            
+            // Обновляем информацию о комнате
             const room = rooms.find(r => r.code === currentRoom);
-            document.getElementById('currentRoomDisplay').innerText = room?.name || currentRoom || '—';
+            document.getElementById('roomNameDisplay').innerText = room?.name || currentRoom || '—';
+            document.getElementById('roomCodeDisplay').innerText = currentRoom ? `📌 ${currentRoom}` : '';
+            
+            // Голосовой чат
+            if (currentUser?.verified) {
+                document.getElementById('voiceChat').style.display = 'flex';
+            } else {
+                document.getElementById('voiceChat').style.display = 'none';
+            }
             
             document.getElementById('sendBtn').disabled = !(currentUser && currentRoom);
             
             renderSidebar();
-            renderMessages();
         }
         
         // ===== ВСПОМОГАТЕЛЬНЫЕ =====
@@ -1072,6 +1142,18 @@
             if (e.key === 'Enter') sendMessage();
         });
         
+        document.getElementById('sendCodeBtn').addEventListener('click', () => {
+            const email = document.getElementById('emailInput').value;
+            sendEmailCode(email);
+        });
+        
+        document.getElementById('verifyBtn').addEventListener('click', () => {
+            const code = document.getElementById('codeInput').value;
+            verifyEmail(code);
+        });
+        
+        document.getElementById('voiceBtn').addEventListener('click', toggleVoice);
+        
         // Переключение вкладок
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -1081,7 +1163,7 @@
             });
         });
         
-        // Закрытие сайдбара при клике вне его на мобильных
+        // Закрытие сайдбара на мобильных
         document.addEventListener('click', (e) => {
             const sidebar = document.getElementById('sidebar');
             const menuToggle = document.getElementById('menuToggle');
@@ -1094,27 +1176,19 @@
             }
         });
         
-        // Предотвращаем закрытие при клике внутри сайдбара
-        document.getElementById('sidebar').addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
-        
         // Экспортируем функции
         window.addReaction = addReaction;
         window.setReplyTo = setReplyTo;
         window.deleteMessage = deleteMessage;
-        window.deleteFile = deleteFile;
         window.renameRoom = renameRoom;
         window.deleteRoom = deleteRoom;
-        window.setCurrentRoom = setCurrentRoom;
-        window.acceptRequest = acceptRequest;
-        window.declineRequest = declineRequest;
         
         // Синхронизация между вкладками
         window.addEventListener('storage', (e) => {
             if ([STORAGE_KEY, ROOMS_KEY, SESSION_KEY].includes(e.key)) {
                 loadData();
                 updateUI();
+                renderMessages();
             }
         });
         
@@ -1124,15 +1198,8 @@
             saveRooms();
         }
         updateUI();
-        
-        // Фикс для мобильной клавиатуры
-        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-            document.body.style.height = window.innerHeight + 'px';
-            window.addEventListener('resize', () => {
-                document.body.style.height = window.innerHeight + 'px';
-            });
-        }
+        renderMessages();
     })();
 </script>
 </body>
-</html>
+                  </html>
